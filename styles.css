@@ -250,3 +250,96 @@ footer {
   .next-card { padding: 20px; }
   .exam-card { padding: 15px; }
 }
+
+.syllabus-toggle {
+  width: 100%;
+  margin-top: 15px;
+  border: 1px solid var(--line);
+  background: rgba(124,156,255,.08);
+  color: var(--accent2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.syllabus-toggle:active { transform: translateY(1px); }
+
+.syllabus-panel {
+  display: none;
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 15px;
+  border: 1px solid var(--line);
+  background: rgba(0,0,0,.14);
+}
+
+.syllabus-panel.open { display: block; }
+
+.progress-row {
+  display: flex;
+  justify-content: flex-end;
+  color: var(--muted);
+  font-size: .72rem;
+  margin-bottom: 6px;
+}
+
+.progress-track {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.progress-fill {
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  transition: width .2s ease;
+}
+
+.syllabus-subject + .syllabus-subject { margin-top: 18px; }
+
+.syllabus-subject h4 {
+  margin: 0 0 9px;
+  font-size: .88rem;
+  color: var(--text);
+}
+
+.topic-grid {
+  display: grid;
+  gap: 7px;
+}
+
+.topic-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #c9d2df;
+  font-size: .78rem;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.topic-item input {
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.topic-item.checked span {
+  color: #748298;
+  text-decoration: line-through;
+}
+
+.source-note {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: #6f7e94;
+  font-size: .68rem;
+  line-height: 1.45;
+}
