@@ -195,6 +195,9 @@ function updateProgress(panel) {
 }
 
 function render() {
+  const openPanels = new Set(
+    [...document.querySelectorAll(".syllabus-panel.open")].map(panel => panel.id)
+  );
   const now = new Date();
   const upcoming = exams
     .map(e => ({ ...e, days: daysUntil(e.date, now) }))
@@ -245,6 +248,15 @@ function render() {
   updateToday();
   updateYear();
   bindSyllabusControls();
+  openPanels.forEach(id => {
+    const panel = document.getElementById(id);
+    const button = document.querySelector(`.syllabus-toggle[data-target="${id}"]`);
+    if (panel && button) {
+      panel.classList.add("open");
+      button.setAttribute("aria-expanded", "true");
+      button.textContent = "Hide syllabus ↑";
+    }
+  });
   document.querySelectorAll(".syllabus-panel").forEach(updateProgress);
 }
 
