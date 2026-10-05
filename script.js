@@ -195,9 +195,6 @@ function updateProgress(panel) {
 }
 
 function render() {
-  const openPanels = new Set(
-    [...document.querySelectorAll(".syllabus-panel.open")].map(panel => panel.id)
-  );
   const now = new Date();
   const upcoming = exams
     .map(e => ({ ...e, days: daysUntil(e.date, now) }))
@@ -222,7 +219,7 @@ function render() {
     const dayText = completed ? "Completed" : e.days === 0 ? "Today" : e.days;
     const panelId = `syllabus-${e.id}`;
     return `
-      <article class="exam-card ${completed ? "completed" : ""}">
+      <article class="exam-card ${completed ? "completed" : ""}" data-exam-id="${e.id}">
         <div class="exam-top">
           <div>
             <h3 class="exam-title">${e.name}</h3>
@@ -234,7 +231,7 @@ function render() {
           <div class="days">${dayText}${typeof dayText === "number" ? ' <span>days left</span>' : ""}</div>
           <div class="exam-date">${formatDate(e.date)}</div>
         </div>
-        <button class="syllabus-toggle" data-target="${panelId}" aria-expanded="false">View syllabus ↓</button>
+        <button type="button" class="syllabus-toggle" data-target="${panelId}" aria-expanded="false">View syllabus ↓</button>
         <div id="${panelId}" class="syllabus-panel">
           <div class="progress-row"><span class="progress-text">0/0 topics completed</span></div>
           <div class="progress-track"><div class="progress-fill"></div></div>
@@ -248,17 +245,38 @@ function render() {
   updateToday();
   updateYear();
   bindSyllabusControls();
-  openPanels.forEach(id => {
-    const panel = document.getElementById(id);
-    const button = document.querySelector(`.syllabus-toggle[data-target="${id}"]`);
-    if (panel && button) {
-      panel.classList.add("open");
-      button.setAttribute("aria-expanded", "true");
-      button.textContent = "Hide syllabus ↑";
-    }
-  });
   document.querySelectorAll(".syllabus-panel").forEach(updateProgress);
 }
 
+// Render the exam cards only once. Rebuilding them every second caused an
+// open syllabus panel to be replaced, which could make it close on mobile.
 render();
-setInterval(render, 1000);
+
+function updateLiveCountdowns() {
+  const now = new Date();
+  const upcoming = exams
+    .map(e => ({ ...e, days: daysUntil(e.date, now) }))
+    .sort((a, b) => a.days - b.days || a.priority - b.priority);
+  const next = upcoming.find(e => e.days >= 0);
+
+  if (next) {
+    $("nextCount").textContent = next.days === 0 ? "TODAY" : `${next.days} days`;
+    $("nextDate").textContent = `${next.stage} • ${formatDate(next.date)}${next.tentative ? " • Tentative" : ""}`;
+  }
+
+  upcoming.forEach(e => {
+    const card = document.querySelector(`.exam-card[data-exam-id="${e.id}"]`);
+    if (!card) return;
+    const daysEl = card.querySelector(".days");
+    if (!daysEl) return;
+    if (e.days < 0) daysEl.textContent = "Completed";
+    else if (e.days === 0) daysEl.textContent = "Today";
+    else daysEl.innerHTML = `${e.days} <span>days left</span>`;
+  });
+
+  updateToday();
+  updateYear();
+}
+
+// Keep the live countdown, but never rebuild the syllabus DOM.
+setInterval(updateLiveCountdowns, 1000);
