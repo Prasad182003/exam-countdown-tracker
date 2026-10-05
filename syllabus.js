@@ -1,8 +1,3 @@
-/*
-  Personal Exam Countdown + Syllabus Tracker
-  Dates are kept here so the countdown stays fully client-side.
-*/
-
 const exams = [
   {
     id: "uiic-pre",
@@ -109,116 +104,49 @@ const exams = [
   }
 ];
 
-const $ = (id) => document.getElementById(id);
+const select = document.getElementById("examSelect");
+const content = document.getElementById("syllabusContent");
 
-function startOfLocalDay(date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+function slug(value) { return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+
+function renderExam(exam) {
+  const total = exam.syllabus.reduce((sum, [, topics]) => sum + topics.length, 0);
+  content.innerHTML = `
+    <section class="syllabus-page-card">
+      <div class="syllabus-page-head">
+        <div><div class="eyebrow">${exam.tentative ? "TENTATIVE DATE" : "EXAM"}</div><h2>${exam.name}</h2><p>${exam.stage} • ${new Date(exam.date + "T00:00:00").toLocaleDateString("en-IN", {day:"numeric", month:"short", year:"numeric"})}</p></div>
+        <div class="progress-summary"><strong id="doneCount">0/${total}</strong><span>topics</span></div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="subject-list">
+        ${exam.syllabus.map(([subject, topics]) => `
+          <details class="subject-card" open>
+            <summary><span>${subject}</span><small>0/${topics.length}</small></summary>
+            <div class="topic-grid">
+              ${topics.map((topic, i) => { const key = `topic-${exam.id}-${subject}-${i}`; const checked = localStorage.getItem(key) === "1"; return `<label class="topic-item ${checked ? "checked" : ""}"><input type="checkbox" data-key="${key}" ${checked ? "checked" : ""}><span>${topic}</span></label>`; }).join("")}
+            </div>
+          </details>`).join("")}
+      </div>
+      <div class="source-note">Topic list is a practical preparation checklist based on the exam structure used in this tracker. Always follow the latest official notification for the final scope.</div>
+    </section>`;
+  content.querySelectorAll("input[type=checkbox]").forEach(input => input.addEventListener("change", () => {
+    localStorage.setItem(input.dataset.key, input.checked ? "1" : "0");
+    input.closest(".topic-item").classList.toggle("checked", input.checked);
+    updateProgress(); updateSubjectCounts();
+  }));
+  updateProgress(); updateSubjectCounts();
 }
 
-function parseDateOnly(iso) {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d);
+function updateProgress() {
+  const boxes = [...content.querySelectorAll("input[type=checkbox]")];
+  const done = boxes.filter(b => b.checked).length, total = boxes.length;
+  document.getElementById("doneCount").textContent = `${done}/${total}`;
+  document.getElementById("progressFill").style.width = total ? `${done/total*100}%` : "0%";
+}
+function updateSubjectCounts() {
+  content.querySelectorAll(".subject-card").forEach(card => { const boxes=[...card.querySelectorAll("input")]; card.querySelector("summary small").textContent=`${boxes.filter(b=>b.checked).length}/${boxes.length}`; });
 }
 
-function daysUntil(iso, now = new Date()) {
-  const target = parseDateOnly(iso);
-  const today = startOfLocalDay(now);
-  return Math.ceil((target - today) / 86400000);
-}
-
-function formatDate(iso) {
-  return parseDateOnly(iso).toLocaleDateString("en-IN", {
-    weekday: "short", day: "numeric", month: "short", year: "numeric"
-  });
-}
-
-function updateYear() {
-  const now = new Date();
-  const end = new Date(2026, 11, 31, 23, 59, 59, 999);
-  const diff = Math.max(0, end - now);
-  $("yearDays").textContent = Math.floor(diff / 86400000);
-}
-
-function updateToday() {
-  $("today").textContent = new Date().toLocaleString("en-IN", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-    hour: "2-digit", minute: "2-digit", second: "2-digit"
-  });
-}
-
-function render() {
-  const now = new Date();
-  const upcoming = exams
-    .map(e => ({ ...e, days: daysUntil(e.date, now) }))
-    .sort((a, b) => a.days - b.days || a.priority - b.priority);
-
-  const next = upcoming.find(e => e.days >= 0);
-
-  if (next) {
-    $("nextName").textContent = next.name;
-    $("nextCount").textContent = next.days === 0 ? "TODAY" : `${next.days} days`;
-    $("nextDate").textContent = `${next.stage} • ${formatDate(next.date)}${next.tentative ? " • Tentative" : ""}`;
-  } else {
-    $("nextName").textContent = "All listed exams completed";
-    $("nextCount").textContent = "✓";
-    $("nextDate").textContent = "";
-  }
-
-  $("examCount").textContent = `${exams.length} milestones`;
-
-  $("examList").innerHTML = upcoming.map(e => {
-    const completed = e.days < 0;
-    const dayText = completed ? "Completed" : e.days === 0 ? "Today" : e.days;
-    return `
-      <article class="exam-card ${completed ? "completed" : ""}" data-exam-id="${e.id}">
-        <div class="exam-top">
-          <div>
-            <h3 class="exam-title">${e.name}</h3>
-            <div class="exam-stage">${e.stage}</div>
-          </div>
-          ${e.tentative && !completed ? '<span class="badge">Tentative</span>' : ""}
-        </div>
-        <div class="exam-bottom">
-          <div class="days">${dayText}${typeof dayText === "number" ? ' <span>days left</span>' : ""}</div>
-          <div class="exam-date">${formatDate(e.date)}</div>
-        </div>
-      </article>
-    `;
-  }).join("");
-
-  updateToday();
-  updateYear();
-}
-
-// Render the exam cards only once. Rebuilding them every second caused an
-// open syllabus panel to be replaced, which could make it close on mobile.
-render();
-
-function updateLiveCountdowns() {
-  const now = new Date();
-  const upcoming = exams
-    .map(e => ({ ...e, days: daysUntil(e.date, now) }))
-    .sort((a, b) => a.days - b.days || a.priority - b.priority);
-  const next = upcoming.find(e => e.days >= 0);
-
-  if (next) {
-    $("nextCount").textContent = next.days === 0 ? "TODAY" : `${next.days} days`;
-    $("nextDate").textContent = `${next.stage} • ${formatDate(next.date)}${next.tentative ? " • Tentative" : ""}`;
-  }
-
-  upcoming.forEach(e => {
-    const card = document.querySelector(`.exam-card[data-exam-id="${e.id}"]`);
-    if (!card) return;
-    const daysEl = card.querySelector(".days");
-    if (!daysEl) return;
-    if (e.days < 0) daysEl.textContent = "Completed";
-    else if (e.days === 0) daysEl.textContent = "Today";
-    else daysEl.innerHTML = `${e.days} <span>days left</span>`;
-  });
-
-  updateToday();
-  updateYear();
-}
-
-// Keep the live countdown, but never rebuild the syllabus DOM.
-setInterval(updateLiveCountdowns, 1000);
+exams.forEach(exam => { const option=document.createElement("option"); option.value=exam.id; option.textContent=`${exam.name} — ${exam.stage}`; select.appendChild(option); });
+select.addEventListener("change", () => renderExam(exams.find(e=>e.id===select.value)));
+renderExam(exams[0]);
