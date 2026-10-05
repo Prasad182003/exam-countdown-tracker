@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <title>Exam Countdown</title>
+  <meta name="description" content="Personal exam countdown dashboard">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">STUDY DASHBOARD</div>
+        <h1>Exam Countdown</h1>
+        <p class="subtitle">Your upcoming exams, always calculated from the current date and time.</p>
+      </div>
+      <div class="live-pill"><span class="dot"></span> LIVE</div>
+    </header>
+
+    <section class="today-card">
+      <div>
+        <span class="label">TODAY</span>
+        <strong id="today"></strong>
+      </div>
+      <div class="year-box">
+        <span class="label">2026</span>
+        <strong id="yearDays"></strong>
+        <small>days remaining</small>
+      </div>
+    </section>
+
+    <section class="next-card" id="nextCard">
+      <div class="next-label">NEXT EXAM</div>
+      <h2 id="nextName">—</h2>
+      <div class="next-count" id="nextCount">—</div>
+      <div class="next-date" id="nextDate">—</div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>My Exams</h2>
+        <span id="examCount"></span>
+      </div>
+      <div id="examList" class="exam-list"></div>
+    </section>
+
+    <footer>
+      <p>Countdown updates automatically every second. No database or manual update is required.</p>
+      <p>Dates marked <b>tentative</b> should be checked against the latest official notice/admit card.</p>
+    </footer>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
